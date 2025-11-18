@@ -2,14 +2,37 @@
 const hamburger = document.querySelector('.hamburger');
 const navLinks = document.querySelector('.nav-links');
 
-hamburger.addEventListener('click', () => {
-    navLinks.classList.toggle('active');
-});
+if (hamburger) {
+    hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+    });
+}
 
 // Close mobile menu when clicking on a link
 document.querySelectorAll('.nav-links a').forEach(link => {
     link.addEventListener('click', () => {
-        navLinks.classList.remove('active');
+        if (navLinks) {
+            navLinks.classList.remove('active');
+        }
+    });
+});
+
+// Gallery Page - Tab Functionality
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Remove active class from all buttons and contents
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        // Add active class to clicked button
+        btn.classList.add('active');
+        
+        // Show corresponding content
+        const tabId = btn.getAttribute('data-tab');
+        document.getElementById(tabId).classList.add('active');
     });
 });
 
@@ -37,31 +60,9 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// Contact Form Submission
-const contactForm = document.getElementById('contactForm');
-contactForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    // Get form values
-    const formData = {
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        date: document.getElementById('date').value,
-        guests: document.getElementById('guests').value,
-        message: document.getElementById('message').value
-    };
-    
-    // Here you would typically send this data to your server
-    // For now, we'll just show a success message
-    console.log('Booking Request:', formData);
-    
-    // Show success message
-    showSuccessMessage(contactForm, 'Thank you! Your booking request has been received. We will contact you shortly!');
-    
-    // Reset form
-    contactForm.reset();
-});
+// Contact Form Submission - Now handled by Formspree
+// The form submits directly to Formspree, no JavaScript needed
+// Formspree will send you an email with all booking details
 
 // Review Form Submission
 const reviewForm = document.getElementById('reviewForm');
@@ -208,3 +209,118 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Gallery Lightbox Functionality
+const lightbox = document.getElementById('imageLightbox');
+const lightboxImg = document.getElementById('lightboxImage');
+const lightboxCaption = document.getElementById('lightboxCaption');
+const closeBtn = document.querySelector('.lightbox-close');
+const prevBtn = document.querySelector('.lightbox-prev');
+const nextBtn = document.querySelector('.lightbox-next');
+
+// Get all gallery images
+let galleryItems = [];
+let currentImageIndex = 0;
+let galleryImages = [];
+
+// Function to initialize gallery
+function initializeGallery() {
+    // Clear previous data
+    galleryImages = [];
+    
+    // Get all gallery images (works for both index.html and gallery.html)
+    galleryItems = document.querySelectorAll('.gallery-item img');
+    
+    // Store gallery images data
+    galleryItems.forEach((img, index) => {
+        galleryImages.push({
+            src: img.src,
+            alt: img.alt
+        });
+        
+        // Add click event to each gallery item
+        img.parentElement.addEventListener('click', (e) => {
+            e.preventDefault();
+            openLightbox(index);
+        });
+    });
+}
+
+// Initialize on page load
+if (lightbox) {
+    initializeGallery();
+    
+    // Re-initialize when switching tabs (for gallery.html)
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            setTimeout(() => {
+                initializeGallery();
+            }, 100);
+        });
+    });
+}
+
+// Open lightbox
+function openLightbox(index) {
+    if (!lightbox) return;
+    currentImageIndex = index;
+    lightbox.style.display = 'block';
+    lightboxImg.src = galleryImages[index].src;
+    lightboxCaption.textContent = galleryImages[index].alt;
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+}
+
+// Close lightbox
+function closeLightbox() {
+    if (!lightbox) return;
+    lightbox.style.display = 'none';
+    document.body.style.overflow = 'auto'; // Re-enable scrolling
+}
+
+// Show next image
+function showNext() {
+    currentImageIndex = (currentImageIndex + 1) % galleryImages.length;
+    lightboxImg.src = galleryImages[currentImageIndex].src;
+    lightboxCaption.textContent = galleryImages[currentImageIndex].alt;
+}
+
+// Show previous image
+function showPrev() {
+    currentImageIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
+    lightboxImg.src = galleryImages[currentImageIndex].src;
+    lightboxCaption.textContent = galleryImages[currentImageIndex].alt;
+}
+
+// Event listeners
+if (closeBtn) {
+    closeBtn.addEventListener('click', closeLightbox);
+}
+if (nextBtn) {
+    nextBtn.addEventListener('click', showNext);
+}
+if (prevBtn) {
+    prevBtn.addEventListener('click', showPrev);
+}
+
+// Close lightbox when clicking outside image
+if (lightbox) {
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) {
+            closeLightbox();
+        }
+    });
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+    if (lightbox && lightbox.style.display === 'block') {
+        if (e.key === 'Escape') {
+            closeLightbox();
+        } else if (e.key === 'ArrowRight') {
+            showNext();
+        } else if (e.key === 'ArrowLeft') {
+            showPrev();
+        }
+    }
+});
